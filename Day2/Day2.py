@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+
 def part1():
     with open('input1.txt', 'r') as input:
         opcodes = list(map(int, input.read().split(',')))
@@ -8,6 +9,7 @@ def part1():
     opcodes[2] = 2
 
     opcoder(opcodes)
+
 
 def opcoder(opcodes):
     for i in range(0, len(opcodes), 4):
@@ -25,6 +27,7 @@ def opcoder(opcodes):
         else:
             return -1
 
+
 def part2():
     target = 19690720
 
@@ -40,6 +43,7 @@ def part2():
             opcodes[2] = verb
             if opcoder(opcodes) == target:
                 return 100 * noun + verb
+
 
 if __name__ == '__main__':
     part1()

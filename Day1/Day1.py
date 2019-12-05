@@ -5,6 +5,7 @@ def part1():
             total += int(module) // 3 - 2
     return total
 
+
 def part2():
     total = 0
     with open('input1.txt', 'r') as input:
@@ -14,6 +15,7 @@ def part2():
                 total += inc_fuel
                 inc_fuel = inc_fuel // 3 - 2
     return total
+
 
 if __name__ == '__main__':
     print(part1())
