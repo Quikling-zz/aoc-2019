@@ -1,9 +1,17 @@
+from collections import defaultdict
 from sys import maxsize
 
+
 class OpCoder:
-    def __init__(self, op_codes):
-        self.op_codes = op_codes
+    def __init__(self, op_codes, queue=None):
+        self.queue = queue
         self.instr = 0
+        self.output = False
+        self.halt = False
+        self.rel_base = 0
+        self.op_codes = defaultdict(int)
+        for i, op_code in enumerate(op_codes):
+            self.op_codes[i] = op_code
 
     def get_next(self):
         op_code = self.get_op_code(self.instr)
@@ -21,14 +29,17 @@ class OpCoder:
 
     def get_params(self, op, modes, i):
         if op in [1, 2, 7, 8]:
-            param_list = list(zip(self.op_codes[i + 1:i + 4], [False, False, True]))
-        elif op in [3, 4]:
+            arg_list = [self.op_codes[i] for i in range(i + 1, i + 4)]
+            param_list = list(zip(arg_list, [False, False, True]))
+        elif op in [3, 4, 9]:
+            arg_list = [self.op_codes[i] for i in range(i + 1, i + 2)]
             if op == 3:
-                param_list = list(zip(self.op_codes[i + 1:i + 2], [True]))
+                param_list = list(zip(arg_list, [True]))
             else:
-                param_list = list(zip(self.op_codes[i + 1:i + 2], [False]))
+                param_list = list(zip(arg_list, [False]))
         elif op in [5, 6]:
-            param_list = list(zip(self.op_codes[i + 1:i + 3], [False, False]))
+            arg_list = [self.op_codes[i] for i in range(i + 1, i + 3)]
+            param_list = list(zip(arg_list, [False, False]))
         elif op == 99:
             param_list = []
         else:
@@ -42,10 +53,18 @@ class OpCoder:
 
     def get_param_val(self, param_mode_dest):
         param, mode, dest = param_mode_dest
-        if mode == 1 or dest:
+        if mode == 2:
+            if dest:
+                return param + self.rel_base
+            else:
+                return self.get_op_code(param + self.rel_base)
+        elif mode == 1:
             return param
         elif mode == 0:
-            return self.get_op_code(param)
+            if dest:
+                return param
+            else:
+                return self.get_op_code(param)
         else:
             raise Exception('Invalid mode')
 
@@ -67,13 +86,17 @@ class OpCoder:
                 else:
                     self.set_op_code(dest, 0)
             self.update_instr(inc=4)
-        elif op in [3, 4]:
+        elif op in [3, 4, 9]:
             dest = self.get_param_val(param_list.pop())
             if op == 3:
-                user_in = int(input('Enter input instruction: '))
+                user_in = int(input('Input: '))
+                # user_in = int(self.queue())
                 self.set_op_code(dest, user_in)
             elif op == 4:
                 print('Output: {}'.format(dest))
+                self.output = dest
+            elif op == 9:
+                self.rel_base += dest
             self.update_instr(inc=2)
         elif op in [5, 6]:
             cond, jump = map(self.get_param_val, param_list)
@@ -84,7 +107,7 @@ class OpCoder:
                 self.update_instr(jump=jump)
         elif op == 99:
             print('Halting')
-            self.instr = maxsize
+            self.halt = True
         else:
             raise Exception('Invalid op code')
 
@@ -97,6 +120,6 @@ class OpCoder:
             raise Exception('Invalid instr update')
 
     def run(self):
-        while self.instr < len(self.op_codes):
+        while not self.halt:
             op, param_list = self.get_next()
             self.execute(op, param_list)
