@@ -6,7 +6,7 @@ class OpCoder:
     def __init__(self, op_codes, queue=None):
         self.queue = queue
         self.instr = 0
-        self.output = False
+        self.output = None
         self.halt = False
         self.rel_base = 0
         self.op_codes = defaultdict(int)
@@ -89,11 +89,11 @@ class OpCoder:
         elif op in [3, 4, 9]:
             dest = self.get_param_val(param_list.pop())
             if op == 3:
-                user_in = int(input('Input: '))
-                # user_in = int(self.queue())
+                # user_in = int(input('Input: '))
+                user_in = int(self.queue.get())
                 self.set_op_code(dest, user_in)
             elif op == 4:
-                print('Output: {}'.format(dest))
+                # print('Output: {}'.format(dest))
                 self.output = dest
             elif op == 9:
                 self.rel_base += dest
@@ -120,6 +120,10 @@ class OpCoder:
             raise Exception('Invalid instr update')
 
     def run(self):
-        while not self.halt:
+        while not self.halt and self.output is None:
             op, param_list = self.get_next()
             self.execute(op, param_list)
+
+        out = self.output
+        self.output = None
+        return out
